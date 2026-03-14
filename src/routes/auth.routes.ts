@@ -1,5 +1,5 @@
 import express from "express";
-import { registerUser } from "../controller/auth.controller.js";
+import { loginUser, registerUser } from "../controller/auth.controller.js";
 
 const router = express.Router();
 /* 
@@ -9,6 +9,12 @@ const router = express.Router();
 */
 router.post("/register", registerUser);
 
+/* 
+    POST /api/auth/login
+    Body: { email, password }
+    Response: { message, user }
+*/
+router.post("/login", loginUser);
 
 
 export default router;
