@@ -1,6 +1,7 @@
 import type { Request, Response } from "express";
 import userModel from "../models/user.model.js";
 import jwt from "jsonwebtoken";
+import { sendRegistrationEmail } from "../service/email.service.js";
 
 
 const JWT_SECRET = process.env.JWT_SECRET!;
@@ -54,6 +55,8 @@ export async function registerUser(req: Request, res: Response) {
             },
             token
         });
+
+        await sendRegistrationEmail(email, name);
 
     } catch (error) {
         console.log(error);
