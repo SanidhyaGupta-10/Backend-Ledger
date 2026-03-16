@@ -1,6 +1,7 @@
 import type { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import tokenBlacklist from "../models/blacklist.model.js";
+import userModel from "../models/user.model.js";
 
 export const authMiddleware = async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -21,7 +22,7 @@ export const authMiddleware = async (req: Request, res: Response, next: NextFunc
         }
 
         // Verify token
-        let decodedToken;
+        let decodedToken: any;
         try {
             decodedToken = jwt.verify(token, process.env.JWT_SECRET);
         } catch (verifyError: any) {
@@ -29,12 +30,13 @@ export const authMiddleware = async (req: Request, res: Response, next: NextFunc
             return res.status(401).json({ error: "Invalid or expired token" });
         }
 
-        // Attach user to request
-        if (typeof decodedToken !== "object" || !decodedToken) {
-            return res.status(401).json({ error: "Invalid token payload" });
+        // Fetch user from DB
+        const user = await userModel.findById(decodedToken.userId);
+        if (!user) {
+            return res.status(401).json({ error: "User not found" });
         }
         
-        (req as any).user = decodedToken;
+        req.user = user;
 
         // Call next middleware
         next();
