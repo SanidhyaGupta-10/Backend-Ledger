@@ -1,6 +1,8 @@
 import nodemailer from "nodemailer";
 import dotenv from "dotenv";
 import template from "../utils/template.utils.js";
+import { transactionTemplate } from "../utils/transaction.success.utils.js";
+import { transactionFailureTemplate } from "../utils/transaction.failure.template.js";
 dotenv.config();
 
 const transporter = nodemailer.createTransport({
@@ -51,8 +53,44 @@ async function sendRegistrationEmail(
     console.log(
         userEmail
     )
-}
+};
+
+async function sendTransactionEmail(
+    userEmail: string,
+    name: string,
+    amount: number,
+    toAccount: string
+) {
+    // Calling the template with all arguments
+    const { subject, text, html } = transactionTemplate(name, amount, toAccount);
+
+    try {
+        await sendEmail(userEmail, subject, text, html);
+        console.log(`Email sent successfully to: ${userEmail}`);
+    } catch (error) {
+        console.error(`Failed to send email to ${userEmail}:`, error);
+    }
+};
+
+async function sendFailureEmail(
+    userEmail: string,
+    name: string,
+    amount: number,
+    toAccount: string
+) {
+    const { subject, text, html } = transactionFailureTemplate(name, amount, toAccount);
+
+    try {
+        await sendEmail(userEmail, subject, text, html);
+        console.log(`Failure notification sent to: ${userEmail}`);
+    } catch (error) {
+        console.error(`Email error:`, error);
+    }
+};
+
 
 export {
-    sendRegistrationEmail
-}
+    sendRegistrationEmail,
+    sendTransactionEmail,
+    sendFailureEmail
+};
