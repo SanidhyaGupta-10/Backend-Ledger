@@ -85,4 +85,79 @@ async function createTransaction(req: Request, res: Response) {
      * 3. Check account status
      */
 
+    if (
+        fromUserAccount.status !== "ACTIVE" || 
+        toUserAccount.status !== "ACTIVE"
+    ) {
+        return res.status(400).json({
+            message: "Both fromAccount and toAccount must be ACTIVE to process transaction"
+        })
+    }
+
+    /**
+     * 4. Derive sender balance from ledger
+     */
+
+    const balance = await fromUserAccount.getBalance();
+
+    if(balance < amount) {
+        return res.status(400).json({
+            message: "Insufficient balance"
+        })
+    }
+
+    /**
+     * 5. Create transaction (PENDING)
+     */
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    const [transaction] = await transactionModel.create([
+        {
+            fromAccount,
+            toAccount,
+            amount,
+            idempotencyKey,
+            status: "PENDING"
+        }
+    ], { session });
+
+
+    const debitLedgerEntry = await ledgerModel.create([
+        {
+            account: fromAccount,
+            amount: amount,
+            transaction: transaction._id,
+            type: "DEBIT",
+        }
+    ], { session }); 
+
+    const creditLedgerEntry = await ledgerModel.create([
+        {
+            account: toAccount,
+            type: "CREDIT",
+            amount: amount,
+            transaction: transaction._id,
+        }
+    ], { session });
+
+    transaction.status = "COMPLETED";
+    await transaction.save({ session });
+
+    await session.commitTransaction();
+    session.endSession();
+
+    /**
+     *  10. Transaction email notification
+     */
+
+    
+
+    return res.status(201).json({
+        message: "Transaction created successfully",
+        transaction: transaction
+    })
+
 }
+
+export { createTransaction }
