@@ -1,6 +1,6 @@
 import express from "express";
 import { authMiddleware } from "../middleware/auth.middleware.js";
-import createAccountController from "../controller/account.controller.js";
+import createAccountController from "../controllers/account.controller.js";
 
 const router = express.Router();
 
@@ -8,7 +8,7 @@ const router = express.Router();
  * - POST /api/accounts
  * - Create a new account
  * - Protected Router
- */ 
+ */
 
 router.post("/", authMiddleware, createAccountController);
 
