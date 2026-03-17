@@ -114,8 +114,8 @@ async function createTransaction(req: Request, res: Response) {
 
     const [transaction] = await transactionModel.create([
         {
-            fromAccount,
-            toAccount,
+            fromAccount: fromUserAccount._id,
+            toAccount: toUserAccount._id,
             amount,
             idempotencyKey,
             status: "PENDING"
@@ -125,16 +125,20 @@ async function createTransaction(req: Request, res: Response) {
 
     const debitLedgerEntry = await ledgerModel.create([
         {
-            account: fromAccount,
+            account: fromUserAccount._id,
             amount: amount,
             transaction: transaction._id,
             type: "DEBIT",
         }
     ], { session }); 
 
+    await (() => {
+        return new Promise((resolve, reject) => setTimeout(resolve, 1000 * 10))
+    })()
+
     const creditLedgerEntry = await ledgerModel.create([
         {
-            account: toAccount,
+            account: toUserAccount._id,
             type: "CREDIT",
             amount: amount,
             transaction: transaction._id,
@@ -195,12 +199,19 @@ async function createInitialFundsTransaction(req: Request, res: Response) {
         });
     }
 
+    // Prevent self-transfer
+    if (fromUserAccount._id.toString() === toUserAccount._id.toString()) {
+        return res.status(400).json({
+            message: "Cannot transfer funds to the same account"
+        });
+    }
+
     const session = await mongoose.startSession();
     session.startTransaction();
 
     const transaction = new transactionModel({
         fromAccount: fromUserAccount._id,
-        toAccount,
+        toAccount: toUserAccount._id,
         amount,
         idempotencyKey,
         status: "PENDING"
@@ -214,7 +225,7 @@ async function createInitialFundsTransaction(req: Request, res: Response) {
     }], { session });
 
     const creditLedgerEntry = await ledgerModel.create([{
-        account: toAccount,
+        account: toUserAccount._id,
         amount: amount,
         transaction: transaction._id,
         type: "CREDIT"

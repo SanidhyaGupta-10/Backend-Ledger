@@ -1,5 +1,6 @@
 import express from "express";
-import { loginUser, registerUser } from "../controllers/auth.controller.js";
+import { loginUser, registerUser, logoutUser } from "../controllers/auth.controller.js";
+import { authMiddleware } from "../middleware/auth.middleware.js";
 
 const router = express.Router();
 /* 
@@ -16,5 +17,12 @@ router.post("/register", registerUser);
 */
 router.post("/login", loginUser);
 
+/* 
+    POST /api/auth/logout
+    Headers: Authorization Bearer token
+    Response: { message, status }
+*/
+router.post("/logout", authMiddleware, logoutUser);
 
-export default router;
+
+export default router;

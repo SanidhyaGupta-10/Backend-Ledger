@@ -2,6 +2,7 @@ import type { Request, Response } from "express";
 import userModel from "../models/user.model.js";
 import jwt from "jsonwebtoken";
 import { sendRegistrationEmail } from "../service/email.service.js";
+import tokenBlacklist from "../models/blacklist.model.js";
 
 
 const JWT_SECRET = process.env.JWT_SECRET!;
@@ -124,5 +125,46 @@ export async function loginUser(req: Request, res: Response) {
     } catch (error) {
         console.log(error);
         res.status(500).json({ message: "Internal server error" });
+    }
+}
+
+/**
+ * @description Logout user
+ * @route POST /api/auth/logout
+ * @access Private
+ */
+export async function logoutUser(req: Request, res: Response) {
+    try {
+        const token = req.cookies.token || req.headers.authorization?.split(" ")[1];
+
+        if (!token) {
+            return res.status(400).json({ 
+                message: "No token provided" 
+            });
+        }
+
+        // Verify the token
+        const isBlacklisted = await tokenBlacklist.findOne({ token });
+        if (isBlacklisted) {
+            return res.status(401).json({ 
+                message: "Token is blacklisted" 
+            });
+        }
+
+        // Blacklist the token
+        await tokenBlacklist.create({ token });
+
+        // Clear the cookie
+        res.clearCookie("token");
+
+        res.status(200).json({ 
+            message: "Logged out successfully", 
+            status: "success" 
+        });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ 
+            message: "Internal server error" 
+        });
     }
 }
