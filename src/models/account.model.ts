@@ -57,11 +57,11 @@ accountSchema.methods.getBalance = async function(this: HydratedDocument<any>) {
         }
     ]);
     
-    if(!res?.balance || res.balance.length === 0) {
+    if (res?.balance == null) {
         return 0;
     }
 
-    return res[0].balance;
+    return res.balance;
 };
 
 type IAccount = InferSchemaType<typeof accountSchema> & { getBalance(): Promise<number> };
