@@ -1,6 +1,6 @@
 import express from "express";
 import { authMiddleware } from "../middleware/auth.middleware.js";
-import createAccountController from "../controllers/account.controller.js";
+import accountController from "../controllers/account.controller.js";
 
 const router = express.Router();
 
@@ -10,6 +10,7 @@ const router = express.Router();
  * - Protected Router
  */
 
-router.post("/", authMiddleware, createAccountController);
+router.post("/", authMiddleware, accountController.createAccountController);
+router.get("/", authMiddleware, accountController.getUserAccounts);
 
 export default router;
