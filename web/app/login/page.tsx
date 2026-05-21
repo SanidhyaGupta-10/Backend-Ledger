@@ -4,36 +4,20 @@
  */
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
-import { useAuth } from "@/hooks/useAuth";
+import { useLogin } from "@/hooks/useAuth";
 import GlassCard from "@/components/GlassCard";
 
 export default function LoginPage() {
-  const { login } = useAuth();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-
-  /** Handle form submit — calls login from AuthContext */
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-    setLoading(true);
-
-    try {
-      await login(email, password);
-      // Redirect happens inside AuthContext.login()
-    } catch (err: unknown) {
-      const msg =
-        (err as { response?: { data?: { message?: string } } })?.response?.data
-          ?.message || "Login failed. Please try again.";
-      setError(msg);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const {
+    email,
+    setEmail,
+    password,
+    setPassword,
+    error,
+    loading,
+    handleSubmit,
+  } = useLogin();
 
   return (
     <div className="min-h-[90vh] flex items-center justify-center px-4 animate-fade-in-up">

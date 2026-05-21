@@ -4,120 +4,31 @@
  */
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import GlassCard from "@/components/GlassCard";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import LoadingSpinner from "@/components/LoadingSpinner";
-import { fetchAccounts, fetchBalance, createTransaction } from "@/lib/api";
-import type { Account } from "@/lib/api";
-
-/** Account with balance attached for the dropdown */
-interface AccountWithBalance extends Account {
-  balance: number;
-}
+import { useAccounts } from "@/hooks/useAccounts";
+import { useTransfer } from "@/hooks/useTransfer";
 
 export default function SendMoneyPage() {
-  const [accounts, setAccounts] = useState<AccountWithBalance[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [sending, setSending] = useState(false);
-
-  // Form fields
-  const [fromAccount, setFromAccount] = useState("");
-  const [toAccount, setToAccount] = useState("");
-  const [amount, setAmount] = useState("");
-
-  // UI state
-  const [step, setStep] = useState<"form" | "confirm" | "success" | "error">("form");
-  const [error, setError] = useState("");
-
-  /** Load user's accounts with balances for the "From" dropdown */
-  const loadAccounts = useCallback(async () => {
-    try {
-      const accs = await fetchAccounts();
-      const withBalances = await Promise.all(
-        accs.map(async (acc) => {
-          try {
-            const balance = await fetchBalance(acc._id);
-            return { ...acc, balance };
-          } catch {
-            return { ...acc, balance: 0 };
-          }
-        })
-      );
-      setAccounts(withBalances.filter((a) => a.status === "ACTIVE"));
-    } catch {
-      setError("Failed to load accounts");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    loadAccounts();
-  }, [loadAccounts]);
-
-  /** Get the selected "from" account's balance for display */
-  const selectedAccount = accounts.find((a) => a._id === fromAccount);
-
-  /** Validate form and move to confirmation step */
-  const handleReview = (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-
-    if (!fromAccount || !toAccount || !amount) {
-      setError("All fields are required");
-      return;
-    }
-    if (fromAccount === toAccount) {
-      setError("Cannot send to the same account");
-      return;
-    }
-    if (Number(amount) <= 0) {
-      setError("Amount must be positive");
-      return;
-    }
-    if (selectedAccount && Number(amount) > selectedAccount.balance) {
-      setError("Insufficient balance");
-      return;
-    }
-
-    setStep("confirm");
-  };
-
-  /** Execute the transaction with a random idempotency key */
-  const handleSend = async () => {
-    setSending(true);
-    setError("");
-
-    try {
-      await createTransaction({
-        fromAccount,
-        toAccount,
-        amount: Number(amount),
-        idempotencyKey: crypto.randomUUID(),
-      });
-      setStep("success");
-    } catch (err: unknown) {
-      const msg =
-        (err as { response?: { data?: { message?: string } } })?.response?.data
-          ?.message || "Transaction failed. Please try again.";
-      setError(msg);
-      setStep("error");
-    } finally {
-      setSending(false);
-    }
-  };
-
-  /** Reset form to send another transaction */
-  const handleReset = () => {
-    setFromAccount("");
-    setToAccount("");
-    setAmount("");
-    setError("");
-    setStep("form");
-    loadAccounts();
-  };
+  const { activeAccounts: accounts, loading, reload } = useAccounts();
+  const {
+    fromAccount,
+    setFromAccount,
+    toAccount,
+    setToAccount,
+    amount,
+    setAmount,
+    step,
+    setStep,
+    error,
+    sending,
+    selectedAccount,
+    handleReview,
+    handleSend,
+    handleReset,
+  } = useTransfer(accounts, reload);
 
   return (
     <ProtectedRoute>

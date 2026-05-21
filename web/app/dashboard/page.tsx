@@ -5,13 +5,11 @@
  */
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuthContext } from "@/hooks/useAuthContext";
 import GlassCard from "@/components/GlassCard";
 import LoadingSpinner from "@/components/LoadingSpinner";
-import { fetchAccounts, fetchBalance, createAccount } from "@/lib/api";
-import type { Account } from "@/lib/api";
+import { useAccounts } from "@/hooks/useAccounts";
 
 /** Returns a greeting based on the current hour */
 function getGreeting(): string {
@@ -21,62 +19,16 @@ function getGreeting(): string {
   return "Good evening";
 }
 
-/** Account card data — account + its fetched balance */
-interface AccountWithBalance extends Account {
-  balance: number;
-}
-
 export default function DashboardPage() {
-  const { user } = useAuth();
-  const [accounts, setAccounts] = useState<AccountWithBalance[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [creating, setCreating] = useState(false);
-  const [error, setError] = useState("");
-
-  /** Fetch all accounts and their balances */
-  const loadAccounts = useCallback(async () => {
-    try {
-      setLoading(true);
-      const accs = await fetchAccounts();
-
-      // Fetch balance for each account in parallel
-      const withBalances = await Promise.all(
-        accs.map(async (acc) => {
-          try {
-            const balance = await fetchBalance(acc._id);
-            return { ...acc, balance };
-          } catch {
-            return { ...acc, balance: 0 };
-          }
-        })
-      );
-      setAccounts(withBalances);
-    } catch {
-      setError("Failed to load accounts");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    loadAccounts();
-  }, [loadAccounts]);
-
-  /** Create a new account and refresh the list */
-  const handleCreateAccount = async () => {
-    setCreating(true);
-    try {
-      await createAccount();
-      await loadAccounts();
-    } catch {
-      setError("Failed to create account");
-    } finally {
-      setCreating(false);
-    }
-  };
-
-  /** Total balance across all accounts */
-  const totalBalance = accounts.reduce((sum, acc) => sum + acc.balance, 0);
+  const { user } = useAuthContext();
+  const {
+    accounts,
+    loading,
+    creating,
+    error,
+    totalBalance,
+    handleCreateAccount,
+  } = useAccounts();
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8 animate-fade-in-up">

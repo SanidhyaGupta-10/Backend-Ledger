@@ -4,63 +4,26 @@
  */
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
-import { useAuth } from "@/hooks/useAuth";
+import { useRegister } from "@/hooks/useAuth";
 import GlassCard from "@/components/GlassCard";
 
-/** Returns password strength (0-4) based on length, uppercase, numbers, symbols */
-function getPasswordStrength(pw: string): number {
-  let score = 0;
-  if (pw.length >= 6) score++;
-  if (pw.length >= 10) score++;
-  if (/[A-Z]/.test(pw) && /[a-z]/.test(pw)) score++;
-  if (/[0-9]/.test(pw) && /[^A-Za-z0-9]/.test(pw)) score++;
-  return score;
-}
-
-/** Strength bar colors and labels */
-const strengthConfig = [
-  { color: "bg-error", label: "Too weak" },
-  { color: "bg-error", label: "Weak" },
-  { color: "bg-warning", label: "Fair" },
-  { color: "bg-success", label: "Strong" },
-  { color: "bg-success", label: "Very strong" },
-];
-
 export default function RegisterPage() {
-  const { register } = useAuth();
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-
-  const strength = getPasswordStrength(password);
-
-  /** Handle form submit — validates passwords match, then calls register */
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-
-    if (password !== confirmPassword) {
-      setError("Passwords do not match");
-      return;
-    }
-
-    setLoading(true);
-    try {
-      await register(name, email, password);
-    } catch (err: unknown) {
-      const msg =
-        (err as { response?: { data?: { message?: string } } })?.response?.data
-          ?.message || "Registration failed. Please try again.";
-      setError(msg);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const {
+    name,
+    setName,
+    email,
+    setEmail,
+    password,
+    setPassword,
+    confirmPassword,
+    setConfirmPassword,
+    error,
+    loading,
+    strength,
+    strengthConfig,
+    handleSubmit,
+  } = useRegister();
 
   return (
     <div className="min-h-[90vh] flex items-center justify-center px-4 py-12 animate-fade-in-up">
