@@ -16,6 +16,10 @@ app.get('/', (req, res) => {
   res.json({ message: "Ledger API is online" });
 });
 
+app.get('/health', (req, res) => {
+  res.json({ message: "Ledger API is working correctly" });
+});
+
 app.use("/api/auth", authRoutes);
 app.use("/api/accounts", accountRoutes);
 app.use("/api/transactions", transactionRoutes);

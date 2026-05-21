@@ -6,11 +6,13 @@ import tokenBlacklist from "../models/blacklist.model.js";
 
 
 const JWT_SECRET = process.env.JWT_SECRET!;
+
 /**
  * @description Register a new user
  * @route POST /api/auth/register
  * @access Public
  */
+
 export async function registerUser(req: Request, res: Response) {
     try {
         const { name, email, password } = req.body;
@@ -70,6 +72,7 @@ export async function registerUser(req: Request, res: Response) {
  * @route POST /api/auth/login
  * @access Public
  */
+
 export async function loginUser(req: Request, res: Response) {
     try {
         const { email, password } = req.body;
