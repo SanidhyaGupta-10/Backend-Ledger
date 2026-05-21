@@ -2,6 +2,7 @@
  * @fileoverview useTransfer hook — manages the complex multi-step state machine for transfers,
  * validates inputs (such as matching accounts or insufficient balance), handles submission with idempotency,
  * and handles form resets.
+ * 💸 Powers customer-to-customer atomic ledger transfers.
  */
 "use client";
 
@@ -9,6 +10,11 @@ import { useState, useMemo } from "react";
 import { createTransaction } from "@/lib/api";
 import type { AccountWithBalance } from "@/types";
 
+/**
+ * 💸 Custom Hook: useTransfer
+ * Governs the multi-stage transaction state machine (`form` -> `confirm` -> `success` / `error`).
+ * Implements high-integrity validations and auto-generates idempotency keys.
+ */
 export function useTransfer(accounts: AccountWithBalance[], onResetSuccess?: () => void) {
   const [fromAccount, setFromAccount] = useState("");
   const [toAccount, setToAccount] = useState("");
@@ -17,37 +23,48 @@ export function useTransfer(accounts: AccountWithBalance[], onResetSuccess?: () 
   const [error, setError] = useState("");
   const [sending, setSending] = useState(false);
 
-  /** Find currently selected sender account to access its balance */
+  /**
+   * 🏦 Memoized State: Selected Sender Account
+   * Fetches full account object matching selected ID to retrieve real-time balance.
+   */
   const selectedAccount = useMemo(() => {
     return accounts.find((a) => a._id === fromAccount);
   }, [accounts, fromAccount]);
 
-  /** Form review step: Validates input parameters before moving to confirmation */
+  /**
+   * 🔍 Interactive Action: Review Transfer Parameters
+   * Performs thorough front-end validations (e.g. self-transfers, funds bounds)
+   * before advancing to confirmation screen.
+   */
   const handleReview = (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
     if (!fromAccount || !toAccount || !amount) {
-      setError("All fields are required");
+      setError("All fields are required 📋");
       return;
     }
     if (fromAccount === toAccount) {
-      setError("Cannot send to the same account");
+      setError("Cannot send to the same account 🚫");
       return;
     }
     if (Number(amount) <= 0) {
-      setError("Amount must be positive");
+      setError("Amount must be positive 💰");
       return;
     }
     if (selectedAccount && Number(amount) > selectedAccount.balance) {
-      setError("Insufficient balance");
+      setError("Insufficient balance in source account ❌");
       return;
     }
 
     setStep("confirm");
   };
 
-  /** Form submit step: Sends transactional POST request using UUID as idempotencyKey */
+  /**
+   * 🚀 Interactive Action: Execute Ledger Transfer
+   * Dispatches transaction data to DB controller.
+   * Generates a random UUID on the client side as a secure idempotency key.
+   */
   const handleSend = async () => {
     setSending(true);
     setError("");
@@ -63,7 +80,7 @@ export function useTransfer(accounts: AccountWithBalance[], onResetSuccess?: () 
     } catch (err: unknown) {
       const msg =
         (err as { response?: { data?: { message?: string } } })?.response?.data
-          ?.message || "Transaction failed. Please try again.";
+          ?.message || "Transaction failed. Please try again. 😢";
       setError(msg);
       setStep("error");
     } finally {
@@ -71,7 +88,10 @@ export function useTransfer(accounts: AccountWithBalance[], onResetSuccess?: () 
     }
   };
 
-  /** Resets state variables to default and reloads accounts */
+  /**
+   * 🧹 Interactive Action: Reset State
+   * Cleans form inputs, clears validation flags, and refreshes parent dashboards.
+   */
   const handleReset = () => {
     setFromAccount("");
     setToAccount("");

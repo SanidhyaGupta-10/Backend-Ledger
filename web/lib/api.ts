@@ -1,6 +1,7 @@
 /**
  * @fileoverview API service layer — typed functions for all backend endpoints.
  * Centralizes API calls so components don't deal with URLs or axios directly.
+ * 🔌 Bridges Next.js state layers to Express ledger endpoints.
  */
 
 import { api } from "./axios";
@@ -15,7 +16,10 @@ import type {
 
 /* ── Auth APIs ── */
 
-/** Register a new user → returns user + JWT token */
+/**
+ * 📝 Register User
+ * Registers a new user on the system and auto-authenticates via JWT.
+ */
 export async function registerUser(
   name: string,
   email: string,
@@ -29,7 +33,10 @@ export async function registerUser(
   return response.data;
 }
 
-/** Login with email & password → returns user + JWT token */
+/**
+ * 🔑 Login User
+ * Authenticates user credentials and resolves session payload.
+ */
 export async function loginUser(
   email: string,
   password: string
@@ -41,20 +48,29 @@ export async function loginUser(
   return response.data;
 }
 
-/** Logout — blacklists the current JWT token on the backend */
+/**
+ * 🚪 Logout User
+ * Revokes current session tokens and clears HTTP authorization keys.
+ */
 export async function logoutUser(): Promise<void> {
   await api.post("/auth/logout");
 }
 
 /* ── Account APIs ── */
 
-/** Fetch all accounts belonging to the logged-in user */
+/**
+ * 🏢 Fetch Personal Accounts
+ * Retrieves all ledger-tracked accounts owned by the authenticated customer.
+ */
 export async function fetchAccounts(): Promise<Account[]> {
   const response = await api.get<{ accounts: Account[] }>("/accounts");
   return response.data.accounts;
 }
 
-/** Get balance for an account (calculated from ledger: credits - debits) */
+/**
+ * 🧮 Fetch Account Balance
+ * Returns the net balance (sum of credits minus sum of debits) for a specific account.
+ */
 export async function fetchBalance(accountId: string): Promise<number> {
   const response = await api.get<{ balance: number }>(
     `/accounts/balance/${accountId}`
@@ -62,7 +78,10 @@ export async function fetchBalance(accountId: string): Promise<number> {
   return response.data.balance;
 }
 
-/** Create a new INR account for the authenticated user */
+/**
+ * ➕ Create Account
+ * Provisions a new active INR currency account for the customer.
+ */
 export async function createAccount(): Promise<Account> {
   const response = await api.post<{ account: Account }>("/accounts");
   return response.data.account;
@@ -71,8 +90,9 @@ export async function createAccount(): Promise<Account> {
 /* ── Transaction APIs ── */
 
 /**
- * Create a money transfer. Uses idempotencyKey (UUID) to prevent
- * duplicate processing if the request is retried.
+ * 💸 Create Customer Transaction
+ * Dispatches a customer transfer request using a client-generated UUID
+ * as an idempotency key to protect against packet retries.
  */
 export async function createTransaction(
   data: CreateTransactionData
@@ -86,7 +106,10 @@ export async function createTransaction(
 
 /* ── System Admin APIs ── */
 
-/** Fetch all system accounts (system admin only) */
+/**
+ * 👑 Fetch All System Accounts (Admin Mode)
+ * Retrieves global ledger records including owner details, restricted to system administrator accounts.
+ */
 export async function fetchAllAccountsSystem(): Promise<SystemAccount[]> {
   const response = await api.get<{ accounts: SystemAccount[] }>(
     "/accounts/system/all"
@@ -94,7 +117,11 @@ export async function fetchAllAccountsSystem(): Promise<SystemAccount[]> {
   return response.data.accounts;
 }
 
-/** Credit/deposit initial funds to any account (system admin only) */
+/**
+ * 🚀 Inject Direct Credit (Admin Mode)
+ * Bypasses ordinary user validation to seed initial or reserve ledger balances.
+ * Generates an automatic idempotency key.
+ */
 export async function sendInitialFundsSystem(
   toAccount: string,
   amount: number

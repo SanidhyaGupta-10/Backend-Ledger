@@ -1,6 +1,7 @@
 /**
- * @fileoverview Login Page — glassmorphism card with email/password form.
- * On success, redirects to dashboard via AuthContext.
+ * @fileoverview Login Page — customer session sign-in interface.
+ * 🔐 Displays a premium dark glassmorphism card containing validated forms for authentication.
+ * Relies on the custom useLogin hook to process authentication cycles asynchronously.
  */
 "use client";
 
@@ -22,24 +23,26 @@ export default function LoginPage() {
   return (
     <div className="min-h-[90vh] flex items-center justify-center px-4 animate-fade-in-up">
       <GlassCard className="w-full max-w-md p-8 sm:p-10">
-        {/* Header */}
+        
+        {/* ── 🏦 Header Title & Subtitle ── */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold gradient-text-gold mb-2">Welcome Back</h1>
-          <p className="text-text-secondary">Sign in to your NexBank account</p>
+          <h1 className="text-3xl font-bold gradient-text-gold mb-2">Welcome Back 🔐</h1>
+          <p className="text-text-secondary">Sign in to your premium NexBank account</p>
         </div>
 
-        {/* Error message */}
+        {/* ── ⚠️ Form Error Alert Banner ── */}
         {error && (
-          <div className="mb-6 p-3 rounded-xl bg-error/10 border border-error/30 text-error text-sm text-center">
+          <div className="mb-6 p-3 rounded-xl bg-error/10 border border-error/30 text-error text-sm text-center animate-shake">
             {error}
           </div>
         )}
 
-        {/* Login form */}
+        {/* ── 📤 Authentication Form ── */}
         <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+          {/* Email input field */}
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-text-secondary mb-2">
-              Email Address
+              Email Address 📧
             </label>
             <input
               id="email"
@@ -48,13 +51,14 @@ export default function LoginPage() {
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@example.com"
               required
-              className="glass-input w-full px-4 py-3"
+              className="glass-input w-full px-4 py-3 focus:border-gold/50 transition-all duration-300"
             />
           </div>
 
+          {/* Password input field */}
           <div>
             <label htmlFor="password" className="block text-sm font-medium text-text-secondary mb-2">
-              Password
+              Password 🔑
             </label>
             <input
               id="password"
@@ -64,24 +68,25 @@ export default function LoginPage() {
               placeholder="••••••••"
               required
               minLength={6}
-              className="glass-input w-full px-4 py-3"
+              className="glass-input w-full px-4 py-3 focus:border-gold/50 transition-all duration-300"
             />
           </div>
 
+          {/* Submit transaction trigger */}
           <button
             type="submit"
             disabled={loading}
-            className="btn-primary w-full !py-3 text-base mt-2"
+            className="btn-primary w-full !py-3 text-base mt-2 hover:scale-[1.02] transition-transform duration-300"
           >
-            {loading ? "Signing in..." : "Sign In"}
+            {loading ? "Signing in... ⌛" : "Sign In 🚀"}
           </button>
         </form>
 
-        {/* Link to register */}
+        {/* ── 🆕 Customer Registration Navigation ── */}
         <p className="mt-8 text-center text-text-secondary text-sm">
-          Don&apos;t have an account?{" "}
+          Don&apos;t have an account yet?{" "}
           <Link href="/register" className="text-gold hover:text-gold-light transition-colors font-medium">
-            Create one free
+            Create one free ✨
           </Link>
         </p>
       </GlassCard>

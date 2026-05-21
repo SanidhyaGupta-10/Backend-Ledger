@@ -10,7 +10,10 @@ import { loginUser, registerUser, logoutUser } from "@/lib/api";
 import type { User } from "@/types";
 import { useRouter } from "next/navigation";
 
-/** Shape of the auth context value available to all consuming components */
+/**
+ * 📦 Shape of the Auth Context Value
+ * Made available to all consuming pages and components in the web app.
+ */
 export interface AuthContextType {
   user: User | null;
   token: string | null;
@@ -21,12 +24,15 @@ export interface AuthContextType {
   logout: () => Promise<void>;
 }
 
-/** React context — starts as null, gets a value when AuthProvider mounts */
+/**
+ * 🔗 React Context Initialization
+ * Starts as null, gets populated when AuthProvider mounts.
+ */
 export const AuthContext = createContext<AuthContextType | null>(null);
 
 /**
- * AuthProvider wraps the app and provides auth state to all children.
- * On mount, it checks localStorage for a saved user session.
+ * 🏛️ AuthProvider Component
+ * Wraps the application layout and supplies authentication state to all child components.
  */
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -34,7 +40,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
-  /** On mount — restore user session from localStorage if it exists */
+  /**
+   * 🔄 Mount Hook: Restore User Session
+   * Syncs active credentials from localStorage so sessions persist across page refreshes.
+   */
   useEffect(() => {
     const savedToken = localStorage.getItem("nexbank_token");
     const savedUser = localStorage.getItem("nexbank_user");
@@ -44,7 +53,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setToken(savedToken);
         setUser(JSON.parse(savedUser));
       } catch {
-        // Corrupted data — clear it
+        /**
+         * ⚠️ Corrupted localStorage details — clear state variables
+         */
         localStorage.removeItem("nexbank_token");
         localStorage.removeItem("nexbank_user");
       }
@@ -52,7 +63,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(false);
   }, []);
 
-  /** Login — calls API, stores token + user in state and localStorage */
+  /**
+   * 🔑 Login Action
+   * Dispatches login REST request, preserves JWT, and redirects to customer dashboard.
+   */
   const login = useCallback(async (email: string, password: string) => {
     const data = await loginUser(email, password);
     setUser(data.user);
@@ -62,7 +76,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     router.push("/dashboard");
   }, [router]);
 
-  /** Register — calls API, stores session, redirects to dashboard */
+  /**
+   * 📝 Register Action
+   * Creates a new user record, signs in automatically, and forwards to dashboard.
+   */
   const register = useCallback(async (name: string, email: string, password: string) => {
     const data = await registerUser(name, email, password);
     setUser(data.user);
@@ -72,12 +89,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     router.push("/dashboard");
   }, [router]);
 
-  /** Logout — calls API to blacklist token, clears local state */
+  /**
+   * 🚪 Logout Action
+   * Requests JWT blacklist verification on the backend and clears local storage traces.
+   */
   const logout = useCallback(async () => {
     try {
       await logoutUser();
     } catch {
-      // Token might already be expired — still clear locally
+      /**
+       * ⚠️ Token might already be expired — clean up locally regardless
+       */
     }
     setUser(null);
     setToken(null);

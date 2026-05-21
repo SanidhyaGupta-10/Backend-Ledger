@@ -1,12 +1,16 @@
 /**
- * @fileoverview useAuth hooks — handles form states and submissions for login/register.
+ * @fileoverview useAuth hooks — handles form states, strength validations, and submissions for login/register.
+ * 🔒 Secures client-side credentials processing.
  */
 "use client";
 
 import { useState } from "react";
 import { useAuthContext } from "./useAuthContext";
 
-/** Returns password strength (0-4) based on length, uppercase, numbers, symbols */
+/**
+ * 🔑 Calculates password strength score (0 to 4)
+ * Evaluates length, letter casing, numbers, and special characters.
+ */
 export function getPasswordStrength(pw: string): number {
   let score = 0;
   if (pw.length >= 6) score++;
@@ -16,17 +20,21 @@ export function getPasswordStrength(pw: string): number {
   return score;
 }
 
-/** Strength bar colors and labels */
+/**
+ * 🎨 Password Strength Meter UI Configuration
+ * Maps score indexes to CSS class indicators and labels.
+ */
 export const strengthConfig = [
-  { color: "bg-error", label: "Too weak" },
-  { color: "bg-error", label: "Weak" },
-  { color: "bg-warning", label: "Fair" },
-  { color: "bg-success", label: "Strong" },
-  { color: "bg-success", label: "Very strong" },
+  { color: "bg-error", label: "Too weak ❌" },
+  { color: "bg-error", label: "Weak ⚠️" },
+  { color: "bg-warning", label: "Fair ⚡" },
+  { color: "bg-success", label: "Strong 💪" },
+  { color: "bg-success", label: "Very strong 🏆" },
 ];
 
 /**
- * Hook to manage login form state, loading state, error state, and submission logic.
+ * 🔐 Custom Hook: useLogin
+ * Manages states for secure session initiation and authentication errors.
  */
 export function useLogin() {
   const { login } = useAuthContext();
@@ -35,6 +43,10 @@ export function useLogin() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  /**
+   * 📤 Handles Login Form Submission
+   * Sends user credentials to the auth controller, capturing failed attempts.
+   */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -45,7 +57,7 @@ export function useLogin() {
     } catch (err: unknown) {
       const msg =
         (err as { response?: { data?: { message?: string } } })?.response?.data
-          ?.message || "Login failed. Please try again.";
+          ?.message || "Login failed. Please try again. 😢";
       setError(msg);
     } finally {
       setLoading(false);
@@ -65,7 +77,8 @@ export function useLogin() {
 }
 
 /**
- * Hook to manage registration form state, password strength, loading, errors, and submission.
+ * 🆕 Custom Hook: useRegister
+ * Governs registration forms, checking password integrity prior to sign-up.
  */
 export function useRegister() {
   const { register } = useAuthContext();
@@ -76,14 +89,22 @@ export function useRegister() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  /**
+   * 📊 Real-time Password Strength Evaluation
+   * Provides dynamic visual feedback during user input.
+   */
   const strength = getPasswordStrength(password);
 
+  /**
+   * 📤 Handles Registration Form Submission
+   * Ensures passwords match and calls register service.
+   */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
     if (password !== confirmPassword) {
-      setError("Passwords do not match");
+      setError("Passwords do not match! 😟");
       return;
     }
 
@@ -93,7 +114,7 @@ export function useRegister() {
     } catch (err: unknown) {
       const msg =
         (err as { response?: { data?: { message?: string } } })?.response?.data
-          ?.message || "Registration failed. Please try again.";
+          ?.message || "Registration failed. Please try again. 😢";
       setError(msg);
     } finally {
       setLoading(false);

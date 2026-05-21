@@ -3,26 +3,27 @@ import transactionModel from "../models/transaction.model.js"
 import ledgerModel from "../models/ledger.model.js"
 import accountModel from "../models/account.model.js"
 import mongoose from "mongoose"
-import { sendRegistrationEmail } from "../service/email.service.js"
+import { sendTransactionEmail, sendFailureEmail } from "../service/email.service.js"
 
 /**
- * - Create a new transaction
- * THE 10-STEP TRANSFER FLOW:
-     * 1. Validate request
-     * 2. Validate idempotency key
-     * 3. Check account status
-     * 4. Derive sender balance from ledger
-     * 5. Create transaction (PENDING)
-     * 6. Create DEBIT ledger entry
-     * 7. Create CREDIT ledger entry
-     * 8. Mark transaction COMPLETED
-     * 9. Commit MongoDB session
-     * 10. Send email notification
+ * 💸 Core Transaction Controller
+ * THE 10-STEP DOUBLE-ENTRY TRANSFER FLOW:
+ * 1. Validate request parameters
+ * 2. Check for duplicate requests via idempotency key
+ * 3. Verify that both source and target accounts are ACTIVE
+ * 4. Verify sender has sufficient ledger-derived balance
+ * 5. Initialize a database transaction session
+ * 6. Create PENDING transaction record
+ * 7. Write DEBIT ledger entry for sender
+ * 8. Write CREDIT ledger entry for receiver
+ * 9. Set transaction to COMPLETED
+ * 10. Commit database writes atomically
+ * 11. Trigger success email notification
  */
 
 async function createTransaction(req: Request, res: Response) {
     /**
-     * 1. Validate request
+     * 📥 Step 1: Validate request input fields
      */
     const {
         fromAccount,
@@ -46,8 +47,9 @@ async function createTransaction(req: Request, res: Response) {
         return res.status(404).json({ message: "Account not found" });
     }
 
-     /**
-     * 2. Idempotency check
+    /**
+     * 🛡️ Step 2: Idempotency safety check
+     * Prevents double-spending or duplicate transfers if requests are retried.
      */
     const existingTransaction = await transactionModel.findOne({
         idempotencyKey
@@ -82,7 +84,8 @@ async function createTransaction(req: Request, res: Response) {
     }
 
     /**
-     * 3. Check account status
+     * 🚫 Step 3: Account Status Verification
+     * Both sender and receiver accounts must be ACTIVE.
      */
 
     if (
@@ -95,7 +98,8 @@ async function createTransaction(req: Request, res: Response) {
     }
 
     /**
-     * 4. Derive sender balance from ledger
+     * 💰 Step 4: Derive sender balance from historical ledger entries
+     * Ensures we don't let the account overdraft.
      */
 
     const balance = await fromUserAccount.getBalance();
@@ -107,68 +111,109 @@ async function createTransaction(req: Request, res: Response) {
     }
 
     /**
-     * 5. Create transaction (PENDING)
+     * 🏦 Step 5: Start a MongoDB session for atomic transactional writes
+     * Ensures that either all ledger modifications succeed together or none do.
      */
     const session = await mongoose.startSession();
     session.startTransaction();
 
-    const [transaction] = await transactionModel.create([
-        {
-            fromAccount: fromUserAccount._id,
-            toAccount: toUserAccount._id,
-            amount,
-            idempotencyKey,
-            status: "PENDING"
+    try {
+        /**
+         * 📝 Step 6: Create the Transaction document in PENDING state
+         */
+        const [transaction] = await transactionModel.create([
+            {
+                fromAccount: fromUserAccount._id,
+                toAccount: toUserAccount._id,
+                amount,
+                idempotencyKey,
+                status: "PENDING"
+            }
+        ], { session });
+
+        /**
+         * ➖ Step 7: Create the DEBIT entry on the sender's account
+         */
+        await ledgerModel.create([
+            {
+                account: fromUserAccount._id,
+                amount: amount,
+                transaction: transaction._id,
+                type: "DEBIT",
+            }
+        ], { session }); 
+
+        /**
+         * ➕ Step 8: Create the CREDIT entry on the receiver's account
+         * (Artificial 10-second delay removed for high-speed performance ⚡)
+         */
+        await ledgerModel.create([
+            {
+                account: toUserAccount._id,
+                type: "CREDIT",
+                amount: amount,
+                transaction: transaction._id,
+            }
+        ], { session });
+
+        /**
+         * ✅ Step 9: Update the Transaction status to COMPLETED
+         */
+        transaction.status = "COMPLETED";
+        await transaction.save({ session });
+
+        /**
+         * 🎉 Step 10: Commit all database updates atomically!
+         */
+        await session.commitTransaction();
+
+        /**
+         * ✉️ Step 11: Send Transactional Email Notification
+         * Dispatched asynchronously to prevent slowing down the HTTP response.
+         */
+        if (req.user) {
+            sendTransactionEmail(req.user.email, req.user.name, amount, toAccount)
+                .catch(err => console.error("📧 [Email Error] Failed to send transfer receipt:", err));
         }
-    ], { session });
 
+        return res.status(201).json({
+            message: "Transaction created successfully",
+            transaction: transaction
+        });
 
-    const debitLedgerEntry = await ledgerModel.create([
-        {
-            account: fromUserAccount._id,
-            amount: amount,
-            transaction: transaction._id,
-            type: "DEBIT",
+    } catch (error: any) {
+        /**
+         * 🔄 Rollback Phase: If anything fails, abort transaction and rollback all writes.
+         */
+        console.error("❌ [Transaction Error] Rollback initiated:", error.message || error);
+        await session.abortTransaction();
+
+        /**
+         * ⚠️ Alert: Send failure email notification to the customer.
+         */
+        if (req.user) {
+            sendFailureEmail(req.user.email, req.user.name, amount, toAccount)
+                .catch(err => console.error("📧 [Email Error] Failed to send failure alert:", err));
         }
-    ], { session }); 
 
-    await (() => {
-        return new Promise((resolve, reject) => setTimeout(resolve, 1000 * 10))
-    })()
+        return res.status(500).json({
+            message: "Transaction processing failed, changes rolled back",
+            error: error.message
+        });
 
-    const creditLedgerEntry = await ledgerModel.create([
-        {
-            account: toUserAccount._id,
-            type: "CREDIT",
-            amount: amount,
-            transaction: transaction._id,
-        }
-    ], { session });
-
-    transaction.status = "COMPLETED";
-    await transaction.save({ session });
-
-    await session.commitTransaction();
-    session.endSession();
-
-    /**
-     *  10. Transaction email notification
-     */
-
-    
-
-    return res.status(201).json({
-        message: "Transaction created successfully",
-        transaction: transaction
-    })
-
-};
+    } finally {
+        /**
+         * 🔒 Session Cleanup: Always close the session to prevent memory leaks.
+         */
+        session.endSession();
+    }
+}
 
 /**
- * - Create initial funds transaction from system user
- * @description System user sends initial funds to a target account
+ * 👑 System Direct Credit Controller
+ * @description Allows system users to credit/deposit funds bypass-checks
  * @route POST /api/transactions/system/initial-funds
- * @access Private (System Users Only)
+ * @access Private (System Admin Only)
  */
 async function createInitialFundsTransaction(req: Request, res: Response) {
     const { toAccount, amount, idempotencyKey } = req.body;
@@ -207,41 +252,62 @@ async function createInitialFundsTransaction(req: Request, res: Response) {
         });
     }
 
+    /**
+     * 🏦 Start DB session transaction for direct minting/credit operation
+     */
     const session = await mongoose.startSession();
     session.startTransaction();
 
-    const transaction = new transactionModel({
-        fromAccount: fromUserAccount._id,
-        toAccount: toUserAccount._id,
-        amount,
-        idempotencyKey,
-        status: "PENDING"
-    });
+    try {
+        const transaction = new transactionModel({
+            fromAccount: fromUserAccount._id,
+            toAccount: toUserAccount._id,
+            amount,
+            idempotencyKey,
+            status: "PENDING"
+        });
 
-    const debitLedgerEntry = await ledgerModel.create([{
-        account: fromUserAccount._id,
-        amount: amount,
-        transaction: transaction._id,
-        type: "DEBIT"
-    }], { session });
+        await ledgerModel.create([{
+            account: fromUserAccount._id,
+            amount: amount,
+            transaction: transaction._id,
+            type: "DEBIT"
+        }], { session });
 
-    const creditLedgerEntry = await ledgerModel.create([{
-        account: toUserAccount._id,
-        amount: amount,
-        transaction: transaction._id,
-        type: "CREDIT"
-    }], { session });
+        await ledgerModel.create([{
+            account: toUserAccount._id,
+            amount: amount,
+            transaction: transaction._id,
+            type: "CREDIT"
+        }], { session });
 
-    transaction.status = "COMPLETED";
-    await transaction.save({ session });
+        transaction.status = "COMPLETED";
+        await transaction.save({ session });
 
-    await session.commitTransaction();
-    session.endSession();
+        /**
+         * 🎉 Commit direct ledger injection
+         */
+        await session.commitTransaction();
 
-    return res.status(201).json({
-        message: "Initial funds transaction completed successfully",
-        transaction: transaction
-    });
+        return res.status(201).json({
+            message: "Initial funds transaction completed successfully",
+            transaction: transaction
+        });
+
+    } catch (error: any) {
+        console.error("❌ [System Credit Error] Rollback direct credit:", error.message || error);
+        await session.abortTransaction();
+        return res.status(500).json({
+            message: "Failed to process system initial funds transaction",
+            error: error.message
+        });
+
+    } finally {
+        /**
+         * 🔒 End the session safely
+         */
+        session.endSession();
+    }
 }
 
 export { createTransaction, createInitialFundsTransaction }

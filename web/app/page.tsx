@@ -1,6 +1,7 @@
 /**
- * @fileoverview Landing Page — the first thing users see.
- * Hero section with CTA, feature cards, stats, and footer.
+ * @fileoverview Landing Page — the primary landing hero interface.
+ * 🌌 Implements a premium dark glassmorphic landing layout featuring animated numerical
+ * count-ups, core ledger features, call-to-actions, and interactive transitions.
  */
 "use client";
 
@@ -8,13 +9,18 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import GlassCard from "@/components/GlassCard";
 
-/** Animated counter — counts up from 0 to target number */
+/**
+ * 🧮 CountUp Component
+ * Smoothly animates values from 0 up to the target number over a fixed duration (2 seconds).
+ * Provides a dynamic, high-fidelity experience during initial viewport paint.
+ */
+
 function CountUp({ target, suffix = "" }: { target: number; suffix?: string }) {
   const [count, setCount] = useState(0);
 
   useEffect(() => {
-    const duration = 2000; // 2 seconds
-    const steps = 60;
+    const duration = 2000; // ⏱️ Total animation time (2000ms)
+    const steps = 60;      // 🎬 Frame steps
     const increment = target / steps;
     let current = 0;
 
@@ -34,7 +40,9 @@ function CountUp({ target, suffix = "" }: { target: number; suffix?: string }) {
   return <span>{count.toLocaleString("en-IN")}{suffix}</span>;
 }
 
-/** Feature card data */
+/**
+ * 💡 Marketing features listing core ledger capabilities
+ */
 const features = [
   {
     icon: "⚡",
@@ -57,11 +65,11 @@ export default function LandingPage() {
   return (
     <div className="animate-fade-in-up">
 
-      {/* ── Hero Section ── */}
+      {/* ── 🚀 Hero Section ── */}
       <section className="min-h-[90vh] flex items-center justify-center px-4">
         <div className="max-w-4xl mx-auto text-center">
           <div className="mb-6">
-            <span className="inline-block px-4 py-2 text-sm font-medium text-gold border border-gold/30 rounded-full bg-gold/5">
+            <span className="inline-block px-4 py-2 text-sm font-medium text-gold border border-gold/30 rounded-full bg-gold/5 animate-pulse">
               ✨ Next-Gen Banking Platform
             </span>
           </div>
@@ -71,20 +79,20 @@ export default function LandingPage() {
           </h1>
           <p className="text-lg sm:text-xl text-text-secondary max-w-2xl mx-auto mb-10 leading-relaxed">
             Experience premium digital banking with glassmorphism aesthetics,
-            instant transfers, and rock-solid double-entry ledger technology.
+            instant transfers, and rock-solid double-entry ledger technology. 🏦
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/register" className="btn-primary text-lg !px-10 !py-4">
-              Open Free Account
+            <Link href="/register" className="btn-primary text-lg !px-10 !py-4 hover:scale-105 transition-transform duration-300">
+              Open Free Account 💳
             </Link>
-            <Link href="/login" className="btn-secondary text-lg !px-10 !py-4">
-              Sign In
+            <Link href="/login" className="btn-secondary text-lg !px-10 !py-4 hover:scale-105 transition-transform duration-300">
+              Sign In 🔐
             </Link>
           </div>
         </div>
       </section>
 
-      {/* ── Features Section ── */}
+      {/* ── 💎 Features Section ── */}
       <section className="py-24 px-4">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
@@ -92,7 +100,7 @@ export default function LandingPage() {
               Why Choose <span className="gradient-text-gold">NexBank</span>
             </h2>
             <p className="text-text-secondary text-lg max-w-xl mx-auto">
-              Built on a production-grade ledger system with enterprise-level security.
+              Built on a production-grade double-entry ledger system with enterprise-level security.
             </p>
           </div>
 
@@ -108,7 +116,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── Stats Section ── */}
+      {/* ── 📈 Stats Section ── */}
       <section className="py-24 px-4">
         <div className="max-w-4xl mx-auto">
           <GlassCard className="p-12">
@@ -117,41 +125,41 @@ export default function LandingPage() {
                 <div className="text-4xl font-bold gradient-text-gold mb-2">
                   <CountUp target={10000} suffix="+" />
                 </div>
-                <p className="text-text-secondary">Active Users</p>
+                <p className="text-text-secondary">👥 Active Users</p>
               </div>
               <div>
                 <div className="text-4xl font-bold gradient-text-gold mb-2">
                   ₹<CountUp target={50} suffix="Cr+" />
                 </div>
-                <p className="text-text-secondary">Processed</p>
+                <p className="text-text-secondary">💸 Volume Processed</p>
               </div>
               <div>
                 <div className="text-4xl font-bold gradient-text-gold mb-2">
                   <CountUp target={99} suffix=".9%" />
                 </div>
-                <p className="text-text-secondary">Uptime</p>
+                <p className="text-text-secondary">⚡ Engine Uptime</p>
               </div>
             </div>
           </GlassCard>
         </div>
       </section>
 
-      {/* ── CTA Section ── */}
+      {/* ── 📣 CTA Section ── */}
       <section className="py-24 px-4">
         <div className="max-w-3xl mx-auto text-center">
           <h2 className="text-3xl sm:text-4xl font-bold mb-6">
             Ready to Experience the Future?
           </h2>
           <p className="text-text-secondary text-lg mb-10 max-w-xl mx-auto">
-            Open your NexBank account in under 30 seconds. No paperwork, no waiting.
+            Open your NexBank account in under 30 seconds. No paperwork, no waiting. ⌛
           </p>
-          <Link href="/register" className="btn-primary text-lg !px-12 !py-4">
+          <Link href="/register" className="btn-primary text-lg !px-12 !py-4 hover:scale-105 transition-transform duration-300">
             Get Started Free →
           </Link>
         </div>
       </section>
 
-      {/* ── Footer ── */}
+      {/* ── 🔖 Footer ── */}
       <footer className="py-12 px-4 border-t border-glass-border">
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
@@ -161,7 +169,7 @@ export default function LandingPage() {
             <span className="font-bold gradient-text-gold">NexBank</span>
           </div>
           <p className="text-text-tertiary text-sm">
-            © {new Date().getFullYear()} NexBank. Built with Ledger Technology.
+            © {new Date().getFullYear()} NexBank. Built with Ledger Technology. 💻
           </p>
           <div className="flex gap-6 text-text-secondary text-sm">
             <Link href="/" className="hover:text-gold transition-colors">Privacy</Link>

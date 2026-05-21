@@ -1,56 +1,110 @@
 import accountModel from "../models/account.model.js";
 import type { Request, Response } from "express";
 
+/**
+ * 🏦 Create New Ledger Account
+ * @route POST /api/accounts
+ * @access Private
+ */
 async function createAccountController(req: Request, res: Response) {
-  const user = req.user;
-  if (!user) {
-    return res.status(401).json({ error: "Unauthorized" });
+  try {
+    const user = req.user;
+    if (!user) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    /**
+     * 🆕 Create a new account document associated with the logged-in user
+     */
+    const account = await accountModel.create({
+      user: user._id,
+    });
+
+    return res.status(201).json({
+      account,
+    });
+  } catch (error: any) {
+    console.error("❌ [Account Controller] Error creating account:", error);
+    return res.status(500).json({ error: "Failed to create account" });
   }
-
-  const account = await accountModel.create({
-    user: user._id,
-  });
-
-  res.status(201).json({
-    account,
-  });
 }
 
+/**
+ * 📂 Get All Accounts for Current User
+ * @route GET /api/accounts
+ * @access Private
+ */
 async function getUserAccounts(req: Request, res: Response) {
-  const user = req.user;
-  if (!user) {
-    return res.status(401).json({ error: "Unauthorized" });
-  }
+  try {
+    const user = req.user;
+    if (!user) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
 
-  const accounts = await accountModel.find({ user: user._id });
-  res.status(200).json({
-    accounts,
-  });
+    /**
+     * 🔍 Retrieve all accounts mapped to the authenticated user's ID
+     */
+    const accounts = await accountModel.find({ user: user._id });
+    
+    return res.status(200).json({
+      accounts,
+    });
+  } catch (error: any) {
+    console.error("❌ [Account Controller] Error fetching user accounts:", error);
+    return res.status(500).json({ error: "Failed to fetch accounts" });
+  }
 }
 
+/**
+ * 📊 Get Specific Account Balance (Ledger-derived)
+ * @route GET /api/accounts/balance/:accountId
+ * @access Private
+ */
 async function getAccountBalance(req: Request, res: Response){
-  const { accountId } = req.params;
+  try {
+    const { accountId } = req.params;
 
-  const account = await accountModel.findOne({
-    _id: accountId,
-    user: req.user?._id
-  })
+    /**
+     * 🔍 Fetch the user account and verify ownership
+     */
+    const account = await accountModel.findOne({
+      _id: accountId,
+      user: req.user?._id
+    })
 
-  if(!account){
-    return res.status(404).json({ error: "Account not found" });
+    if(!account){
+      return res.status(404).json({ error: "Account not found" });
+    }
+
+    /**
+     * 🧮 Compute the actual balance from double-entry ledger database transactions (credits - debits)
+     */
+    const balance = await account.getBalance();
+
+    return res.status(200).json({
+      balance: balance,
+    });
+  } catch (error: any) {
+    console.error("❌ [Account Controller] Error getting account balance:", error);
+    return res.status(500).json({ error: "Failed to fetch account balance" });
   }
-
-  const balance = await account.getBalance();
-
-  res.status(200).json({
-    balance: balance,
-  });
 }
 
+/**
+ * 👑 Admin Control: Get All Registered System Accounts with Balances
+ * @route GET /api/accounts/system/all
+ * @access Private (System Admin Only)
+ */
 async function getAllAccountsSystem(req: Request, res: Response) {
   try {
+    /**
+     * 🔍 Retrieve all system accounts with owner credentials populated
+     */
     const accounts = await accountModel.find().populate("user", "name email");
     
+    /**
+     * 🧮 Compute balances for all accounts concurrently in parallel
+     */
     const accountsWithBalances = await Promise.all(
       accounts.map(async (acc) => {
         const balance = await acc.getBalance();
@@ -66,12 +120,12 @@ async function getAllAccountsSystem(req: Request, res: Response) {
       })
     );
 
-    res.status(200).json({
+    return res.status(200).json({
       accounts: accountsWithBalances
     });
   } catch (error: any) {
-    console.error("[System Accounts] Error fetching all accounts:", error);
-    res.status(500).json({ error: "Failed to fetch all system accounts" });
+    console.error("❌ [System Accounts] Error fetching all accounts:", error);
+    return res.status(500).json({ error: "Failed to fetch all system accounts" });
   }
 }
 
