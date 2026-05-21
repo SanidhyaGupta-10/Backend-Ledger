@@ -47,8 +47,37 @@ async function getAccountBalance(req: Request, res: Response){
   });
 }
 
+async function getAllAccountsSystem(req: Request, res: Response) {
+  try {
+    const accounts = await accountModel.find().populate("user", "name email");
+    
+    const accountsWithBalances = await Promise.all(
+      accounts.map(async (acc) => {
+        const balance = await acc.getBalance();
+        return {
+          _id: acc._id,
+          user: acc.user,
+          status: acc.status,
+          currency: acc.currency,
+          createdAt: acc.createdAt,
+          updatedAt: acc.updatedAt,
+          balance: balance
+        };
+      })
+    );
+
+    res.status(200).json({
+      accounts: accountsWithBalances
+    });
+  } catch (error: any) {
+    console.error("[System Accounts] Error fetching all accounts:", error);
+    res.status(500).json({ error: "Failed to fetch all system accounts" });
+  }
+}
+
 export default { 
   createAccountController, 
-  getUserAccounts ,
-  getAccountBalance
+  getUserAccounts,
+  getAccountBalance,
+  getAllAccountsSystem
 };

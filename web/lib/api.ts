@@ -10,6 +10,7 @@ import type {
   Transaction,
   AuthResponse,
   CreateTransactionData,
+  SystemAccount,
 } from "@/types";
 
 /* ── Auth APIs ── */
@@ -79,6 +80,32 @@ export async function createTransaction(
   const response = await api.post<{ transaction: Transaction }>(
     "/transactions",
     data
+  );
+  return response.data.transaction;
+}
+
+/* ── System Admin APIs ── */
+
+/** Fetch all system accounts (system admin only) */
+export async function fetchAllAccountsSystem(): Promise<SystemAccount[]> {
+  const response = await api.get<{ accounts: SystemAccount[] }>(
+    "/accounts/system/all"
+  );
+  return response.data.accounts;
+}
+
+/** Credit/deposit initial funds to any account (system admin only) */
+export async function sendInitialFundsSystem(
+  toAccount: string,
+  amount: number
+): Promise<Transaction> {
+  const response = await api.post<{ transaction: Transaction }>(
+    "/transactions/system/initial-funds",
+    {
+      toAccount,
+      amount,
+      idempotencyKey: crypto.randomUUID(),
+    }
   );
   return response.data.transaction;
 }

@@ -8,6 +8,22 @@ export interface User {
   _id: string;
   name: string;
   email: string;
+  systemUser?: boolean;
+}
+
+/** Populate user details on system-wide account details */
+export interface SystemAccount {
+  _id: string;
+  user: {
+    _id: string;
+    name: string;
+    email: string;
+  };
+  status: "ACTIVE" | "FROZEN" | "CLOSED";
+  currency: string;
+  createdAt: string;
+  updatedAt: string;
+  balance: number;
 }
 
 /** Bank account — balance is derived from ledger, not stored here */

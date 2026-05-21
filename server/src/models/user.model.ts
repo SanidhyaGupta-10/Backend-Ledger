@@ -30,9 +30,7 @@ const userSchema = new Schema<IUser>({
     },
     systemUser: {
         type: Boolean,
-        default: false,
-        immutable: true,
-        select: false
+        default: false
     }
 }, {
     timestamps: true

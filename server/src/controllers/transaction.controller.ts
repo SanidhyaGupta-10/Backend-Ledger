@@ -189,13 +189,14 @@ async function createInitialFundsTransaction(req: Request, res: Response) {
         });
     }
 
-    const fromUserAccount = await accountModel.findOne({
+    let fromUserAccount = await accountModel.findOne({
         user: req.user?._id
     });
 
     if (!fromUserAccount) {
-        return res.status(400).json({
-            message: "System user account not found"
+        // Auto-create system user account if it doesn't exist
+        fromUserAccount = await accountModel.create({
+            user: req.user?._id
         });
     }
 

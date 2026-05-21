@@ -54,7 +54,8 @@ export async function registerUser(req: Request, res: Response) {
             user: {
                 _id: user._id,
                 name: user.name,
-                email: user.email
+                email: user.email,
+                systemUser: user.systemUser
             },
             token
         });
@@ -120,7 +121,8 @@ export async function loginUser(req: Request, res: Response) {
             user: {
                 _id: user._id,
                 name: user.name,
-                email: user.email
+                email: user.email,
+                systemUser: user.systemUser
             },
             token
         });

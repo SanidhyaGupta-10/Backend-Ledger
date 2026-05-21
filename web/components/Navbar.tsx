@@ -46,6 +46,11 @@ export default function Navbar() {
               <>
                 <Link href="/dashboard" className={linkClass("/dashboard")}>Dashboard</Link>
                 <Link href="/send" className={linkClass("/send")}>Send Money</Link>
+                {user?.systemUser && (
+                  <Link href="/system" className="relative px-4 py-1.5 text-sm font-semibold transition-all duration-300 text-gold hover:text-white border border-gold/30 hover:border-gold/80 rounded-full ml-2 hover:bg-gold/10 flex items-center gap-1.5">
+                    👑 System Panel
+                  </Link>
+                )}
                 <div className="ml-4 flex items-center gap-3">
                   <span className="text-text-secondary text-sm">
                     {user?.name}
@@ -94,6 +99,11 @@ export default function Navbar() {
               <>
                 <Link href="/dashboard" className={linkClass("/dashboard")} onClick={() => setMobileOpen(false)}>Dashboard</Link>
                 <Link href="/send" className={linkClass("/send")} onClick={() => setMobileOpen(false)}>Send Money</Link>
+                {user?.systemUser && (
+                  <Link href="/system" className="relative text-gold font-semibold px-4 py-2 text-sm border border-gold/30 rounded-xl my-1 hover:bg-gold/10 text-center block" onClick={() => setMobileOpen(false)}>
+                    👑 System Panel
+                  </Link>
+                )}
                 <button onClick={() => { logout(); setMobileOpen(false); }} className="btn-secondary text-sm mt-2">
                   Logout
                 </button>

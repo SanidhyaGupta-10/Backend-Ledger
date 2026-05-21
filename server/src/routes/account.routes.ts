@@ -1,5 +1,5 @@
 import express from "express";
-import { authMiddleware } from "../middleware/auth.middleware.js";
+import { authMiddleware, authSystemUserMiddleware } from "../middleware/auth.middleware.js";
 import accountController from "../controllers/account.controller.js";
 
 const router = express.Router();
@@ -27,5 +27,12 @@ router.get("/", authMiddleware, accountController.getUserAccounts);
  */
 
 router.get("/balance/:accountId", authMiddleware, accountController.getAccountBalance);
+
+/**
+ * - GET /api/accounts/system/all
+ * - Get all accounts (System Admin Only)
+ * - Protected Router
+ */
+router.get("/system/all", authSystemUserMiddleware, accountController.getAllAccountsSystem);
 
 export default router;
