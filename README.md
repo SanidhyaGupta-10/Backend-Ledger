@@ -1,74 +1,221 @@
-# Backend Ledger API
+# 🏦 NexBank — Digital Ledger & Premium Banking Hub
 
-A robust financial ledger backend API built with Node.js, Express, TypeScript, and MongoDB. This application provides a comprehensive set of features for managing users, accounts, and financial transactions with a strong focus on data integrity through an immutable ledger system.
+NexBank is a next-generation digital banking platform featuring a **premium glassmorphism theme**, instant atomic transfers, and a rock-solid **double-entry ledger engine** built on Node.js/Express, MongoDB/Mongoose, and Next.js (React).
 
-## Features
+By utilizing double-entry bookkeeping principles, NexBank ensures that every rupee in circulation is mathematically accounted for, preventing balance mismatch discrepancies and database write leaks.
 
-- **Authentication & User Management**: Secure user registration and login using JWT (JSON Web Tokens) with a token blacklist for secure logout. Passwords are securely hashed using bcryptjs.
-- **Account Management**: Create and manage financial accounts linked to users. Calculates accurate account balances on the fly using MongoDB aggregation over the immutable ledger entries.
-- **Idempotent Transactions**: Secure transaction handling between accounts with built-in support for idempotency keys to prevent duplicate transaction processing.
-- **Immutable Ledger**: All financial movements (credits and debits) are recorded in a strictly immutable ledger collection using Mongoose middleware to prevent alterations or deletions.
-- **Role-Based Access Control**: Differentiates between regular users and system users for privileged operations like creating initial funds.
+---
 
-## Tech Stack
+## 💎 Design Philosophy & Architecture
 
-- **Runtime**: Node.js
-- **Framework**: Express.js
-- **Language**: TypeScript
-- **Database**: MongoDB with Mongoose ODM
-- **Security**: JWT for auth, bcryptjs for password hashing
-- **Other utilities**: nodemailer for email notifications
+NexBank utilizes **Rich Glassmorphic Design Aesthetics** for an immersive user experience, coupled with a robust double-entry transactional ledger backend.
 
-## Getting Started
+```mermaid
+graph TD
+    User[👤 Client UI / Web Portal] -->|1. Request Transfer| Router[🌐 Express Router]
+    Router -->|2. Check Idempotency| Idempotency[🛡️ Idempotency Service]
+    Router -->|3. Get Sender Balance| Aggregate[🧮 Mongoose Aggregation]
 
-### Prerequisites
+    subgraph Mongoose Database Session [🔒 Atomic Transaction Boundary]
+        InitTx[📝 Create PENDING Transaction]
+        DebitEntry[➖ Write DEBIT Ledger Entry]
+        CreditEntry[➕ Write CREDIT Ledger Entry]
+        CompleteTx[✅ Set Transaction to COMPLETED]
+    end
 
-- Node.js installed
-- MongoDB instance running
+    Router -->|4. Execute Writes| MongooseSession[Start Session]
+    MongooseSession --> InitTx
+    InitTx --> DebitEntry
+    DebitEntry --> CreditEntry
+    CreditEntry --> CompleteTx
+    CompleteTx -->|5. Commit Writes| DB[(🍃 MongoDB / Mongoose)]
 
-### Installation
+    CompleteTx -->|6. Trigger Email Receipts| EmailService[📧 Asynchronous Email Alert]
+```
 
-1. Clone the repository and navigate to the project directory:
-   ```bash
-   cd 13-Backend-Ledger
-   ```
+---
 
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
+## ⚡ Key Architectural Features
 
-3. Set up environment variables:
-   Create a `.env` file in the root directory and configure the following variables:
-   ```env
-   PORT=8000
-   JWT_SECRET=your_jwt_secret_key
-   MONGODB_URI=your_mongodb_connection_string
-   # Add your email configuration variables as well
-   ```
+### 1. 🧮 Double-Entry Ledger Bookkeeping
 
-4. Start the development server:
-   ```bash
-   npm run dev
-   ```
+Traditional systems store user balances as single columns in an account table (e.g., `balance: 500`). This is highly susceptible to race conditions and dirty writes.
+NexBank calculates balances **dynamically** by aggregating historic ledger entries:
 
-5. Build for production:
-   ```bash
-   npm run build
-   ```
+- **DEBIT (➖)**: A ledger record subtracting funds from an account.
+- **CREDIT (➕)**: A ledger record adding funds to an account.
+- **Net Balance** = `Sum of CREDITs` - `Sum of DEBITs`.
 
-## Key API Endpoints
+### 2. 🛡️ Idempotency Engine
 
-### Authentication
-- `POST /api/auth/register` - Register a new user
-- `POST /api/auth/login` - Authenticate a user and receive a JWT
-- `POST /api/auth/logout` - Securely logout and blacklist the current token
+To prevent packet duplicate requests (e.g., users clicking "Send" twice on a slow network), every ledger transaction requires a client-generated UUID `idempotencyKey`. The backend records this key; subsequent requests return the cached transaction status immediately.
 
-### Accounts
-- `POST /api/accounts/` - Create a new account
-- `GET /api/accounts/` - Retrieve all accounts for the authenticated user
-- `GET /api/accounts/balance/:accountId` - Get the current balance of a specific account
+### 3. 🔒 Connection Leak Protection
 
-### Transactions
-- `POST /api/transactions/` - Create a standard transaction between accounts
-- `POST /api/transactions/system/initial-funds` - System-level endpoint to seed an account with initial funds (requires system user privileges)
+Every database transactional write session uses a resilient `try/catch/finally` harness. In case of unexpected server crashes, it executes a complete transaction rollback (`session.abortTransaction()`) and strictly ends the session (`session.endSession()`) to release MongoDB connection pool handles.
+
+### 4. 📧 Asynchronous Notifications
+
+Upon successful execution, the backend fires asynchronous, non-blocking email alerts to verify transactions to clients without adding latency to the main API thread response.
+
+---
+
+## 📂 Project Directory Structure
+
+```text
+13-Backend-Ledger/
+├── server/                     # 🌐 Express.js Backend Server
+│   ├── src/
+│   │   ├── config/             # Database & environment configurations
+│   │   ├── controllers/        # Transaction, account & authentication controllers
+│   │   ├── middleware/         # Session security guards & auth filters
+│   │   ├── models/             # Mongoose Schemas (User, Account, Ledger, Transaction)
+│   │   ├── service/            # Nodemailer SMTP Email receipt microservices
+│   │   └── app.ts              # Express Server core configuration
+│   ├── package.json
+│   └── tsconfig.json
+├── web/                        # 💻 Next.js Client Web App
+│   ├── app/                    # Next.js Pages (Landing, Dashboard, Forms, Admin)
+│   ├── components/             # Reusable Glassmorphism Cards & Buttons
+│   ├── context/                # Global User Auth State Providers
+│   ├── hooks/                  # Custom hooks (useAccounts, useTransfer, useAuth)
+│   ├── lib/                    # API client configurations (Axios & endpoints)
+│   ├── types/                  # TypeScript interface descriptors
+│   ├── public/                 # Static asset public resources
+│   └── package.json
+└── README.md                   # 📄 Project Master Document
+```
+
+---
+
+## 🧪 Database Models (Mongoose Schemas)
+
+### 👤 User Model
+
+Manages registered bank accounts, securely hashing passwords, and tagging administrator levels.
+
+```typescript
+{
+  name: { type: String, required: true },
+  email: { type: String, required: true, unique: true },
+  password: { type: String, required: true },
+  systemUser: { type: Boolean, default: false } // Admin privileges
+}
+```
+
+### 💳 Account Model
+
+Represents distinct currency bank accounts owned by users. Calculates balances dynamically from the ledger.
+
+```typescript
+{
+  user: { type: ObjectId, ref: "user", required: true },
+  status: { type: String, enum: ["ACTIVE", "FROZEN", "CLOSED"], default: "ACTIVE" },
+  currency: { type: String, default: "INR" }
+}
+```
+
+### ➖ Ledger Entry Model
+
+Individual journal entries recording credits and debits linked to transactions.
+
+```typescript
+{
+  account: { type: ObjectId, ref: "account", required: true },
+  type: { type: String, enum: ["DEBIT", "CREDIT"], required: true },
+  amount: { type: Number, required: true },
+  transaction: { type: ObjectId, ref: "transaction", required: true }
+}
+```
+
+### 📝 Transaction Model
+
+The header/envelope tracking transaction flow metadata.
+
+```typescript
+{
+  fromAccount: { type: ObjectId, ref: "account", required: true },
+  toAccount: { type: ObjectId, ref: "account", required: true },
+  amount: { type: Number, required: true },
+  idempotencyKey: { type: String, required: true, unique: true },
+  status: { type: String, enum: ["PENDING", "COMPLETED", "FAILED", "REVERSED"], default: "PENDING" }
+}
+```
+
+---
+
+## 🚀 Step-by-Step Installation & Run Guide
+
+### Prerequisite Environment Configurations
+
+#### Backend Server (`server/.env`)
+
+Create a `.env` file under the `server` directory:
+
+```env
+PORT=5000
+MONGODB_URI=mongodb+srv://<username>:<password>@cluster.mongodb.net/ledger_db
+JWT_SECRET=your_jwt_signing_secret_key
+
+# Nodemailer SMTP Configuration
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_USER=your-email@gmail.com
+EMAIL_PASS=your-app-password
+```
+
+#### Frontend Client (`web/.env`)
+
+Create a `.env` file under the `web` directory:
+
+```env
+NEXT_PUBLIC_API_URL=http://localhost:5000/api
+```
+
+---
+
+### Command Sequence
+
+#### 🌐 Running the Backend Server
+
+```bash
+# Navigate to backend
+cd server
+
+# Install dependencies
+npm install
+
+# Compile TypeScript and Run server in development mode
+npm run dev
+
+# Build production bundle
+npm run build
+```
+
+#### 💻 Running the Next.js Client
+
+```bash
+# Navigate to web
+cd web
+
+# Install dependencies
+npm install
+
+# Run the client in development mode
+npm run dev
+
+# Build production compiled bundle
+npm run build
+```
+
+---
+
+## 🔒 Security Operations
+
+1. **Password Integrity**: Client-side forms evaluate password entropy using a 4-tier real-time complexity bar.
+2. **Access Guards**: Routes and actions are wrapped with a `ProtectedRoute` component to intercept unauthenticated users.
+3. **Admin Controls**: Administrative functions (direct ledger balance injection/minting) are protected by a `systemUser` DB check.
+
+---
+
+_Built with passion, robust ledger arithmetic, and premium digital aesthetics._ 🏦💎

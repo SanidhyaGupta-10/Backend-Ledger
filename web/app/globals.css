@@ -1,0 +1,242 @@
+/**
+ * NexBank — Global Design System
+ * Royal Purple + Gold glassmorphism theme.
+ * Defines colors, glass utilities, buttons, inputs, and animations.
+ */
+
+@import "tailwindcss";
+
+/* ── Design Tokens → become Tailwind utility classes (e.g. bg-gold, text-violet) ── */
+@theme inline {
+  --color-bg-primary: #0a0015;
+  --color-bg-secondary: #1a0030;
+  --color-bg-tertiary: #0d001a;
+  --color-gold: #d4af37;
+  --color-gold-light: #f0d060;
+  --color-violet: #9b59b6;
+  --color-violet-dark: #8e44ad;
+  --color-success: #2ecc71;
+  --color-error: #e74c3c;
+  --color-warning: #f39c12;
+  --color-glass: rgba(255, 255, 255, 0.05);
+  --color-glass-border: rgba(255, 255, 255, 0.1);
+  --color-glass-hover: rgba(255, 255, 255, 0.08);
+  --color-text-primary: #f5f5f5;
+  --color-text-secondary: rgba(255, 255, 255, 0.6);
+  --color-text-tertiary: rgba(255, 255, 255, 0.35);
+  --font-sans: var(--font-inter);
+
+  /* Animations → usable as animate-float, animate-fade-in-up, etc. */
+  --animate-float: float 20s ease-in-out infinite;
+  --animate-float-delayed: float-delayed 25s ease-in-out infinite;
+  --animate-float-slow: float-slow 30s ease-in-out infinite;
+  --animate-fade-in-up: fade-in-up 0.6s ease-out forwards;
+  --animate-shimmer: shimmer 2s linear infinite;
+  --animate-pulse-glow: pulse-glow 2s ease-in-out infinite;
+  --animate-spin-slow: spin 2s linear infinite;
+}
+
+/* ── Base Styles ── */
+html { scroll-behavior: smooth; }
+
+body {
+  background: linear-gradient(135deg, #0a0015 0%, #1a0030 50%, #0d001a 100%);
+  background-attachment: fixed;
+  color: #f5f5f5;
+  font-family: var(--font-inter), system-ui, sans-serif;
+  min-height: 100vh;
+}
+
+/* Custom scrollbar — purple/gold theme */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: #0a0015; }
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #d4af37, #8e44ad);
+  border-radius: 4px;
+}
+::selection {
+  background: rgba(212, 175, 55, 0.3);
+  color: #f5f5f5;
+}
+
+/* ── Glassmorphism Utilities ── */
+
+/* Standard glass card — frosted translucent background with blur */
+.glass {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+/* Glass with hover — lifts up and adds gold glow on hover */
+.glass-hover {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.glass-hover:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(212, 175, 55, 0.3);
+  box-shadow: 0 8px 32px rgba(212, 175, 55, 0.15);
+  transform: translateY(-4px) scale(1.02);
+}
+
+/* Glass navbar — darker, more opaque than content cards */
+.glass-nav {
+  background: rgba(10, 0, 21, 0.8);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Glass input — subtle frosted input fields, gold glow on focus */
+.glass-input {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  color: #f5f5f5;
+  transition: all 0.3s ease;
+}
+.glass-input:focus {
+  outline: none;
+  border-color: rgba(212, 175, 55, 0.5);
+  box-shadow: 0 0 20px rgba(212, 175, 55, 0.15);
+  background: rgba(255, 255, 255, 0.08);
+}
+.glass-input::placeholder { color: rgba(255, 255, 255, 0.35); }
+
+/* ── Button Styles ── */
+
+/* Primary — gold gradient with shimmer sweep on hover */
+.btn-primary {
+  background: linear-gradient(135deg, #d4af37, #f0d060);
+  color: #0a0015;
+  font-weight: 700;
+  padding: 12px 32px;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(212, 175, 55, 0.4);
+}
+.btn-primary:active { transform: translateY(0); }
+
+/* Shimmer pseudo-element — white diagonal streak slides across on hover */
+.btn-primary::after {
+  content: "";
+  position: absolute;
+  top: 0; left: -100%;
+  width: 100%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+  transition: left 0.5s ease;
+}
+.btn-primary:hover::after { left: 100%; }
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Secondary — glass outline button with gold border */
+.btn-secondary {
+  background: rgba(255, 255, 255, 0.05);
+  color: #d4af37;
+  font-weight: 600;
+  padding: 12px 32px;
+  border-radius: 12px;
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.btn-secondary:hover {
+  background: rgba(212, 175, 55, 0.1);
+  border-color: rgba(212, 175, 55, 0.6);
+  transform: translateY(-2px);
+}
+
+/* ── Gradient Text — fills text with a gradient instead of solid color ── */
+.gradient-text-gold {
+  background: linear-gradient(135deg, #d4af37, #f0d060, #d4af37);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.gradient-text-purple {
+  background: linear-gradient(135deg, #9b59b6, #d4af37);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* ── Status Badges — colored pills for transaction statuses ── */
+.badge {
+  padding: 4px 12px;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.badge-success {
+  background: rgba(46, 204, 113, 0.15);
+  color: #2ecc71;
+  border: 1px solid rgba(46, 204, 113, 0.3);
+}
+.badge-warning {
+  background: rgba(243, 156, 18, 0.15);
+  color: #f39c12;
+  border: 1px solid rgba(243, 156, 18, 0.3);
+}
+.badge-error {
+  background: rgba(231, 76, 60, 0.15);
+  color: #e74c3c;
+  border: 1px solid rgba(231, 76, 60, 0.3);
+}
+
+/* ── Keyframe Animations ── */
+
+/* Background orbs — drift in different figure-8 patterns */
+@keyframes float {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  25% { transform: translate(50px, -80px) scale(1.1); }
+  50% { transform: translate(-30px, -150px) scale(0.95); }
+  75% { transform: translate(80px, -50px) scale(1.05); }
+}
+@keyframes float-delayed {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  25% { transform: translate(-60px, -100px) scale(1.15); }
+  50% { transform: translate(40px, -200px) scale(0.9); }
+  75% { transform: translate(-80px, -80px) scale(1.1); }
+}
+@keyframes float-slow {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(70px, -120px) scale(1.08); }
+  66% { transform: translate(-50px, -60px) scale(0.95); }
+}
+
+/* Page entrance — fades in and slides up from 20px below */
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Button shimmer — diagonal light sweep */
+@keyframes shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+/* Breathing glow — gold box-shadow pulses in and out */
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 5px rgba(212, 175, 55, 0.2); }
+  50% { box-shadow: 0 0 25px rgba(212, 175, 55, 0.4); }
+}
