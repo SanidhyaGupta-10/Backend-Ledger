@@ -32,18 +32,18 @@ async function createTransaction(req: Request, res: Response) {
         idempotencyKey
     } = req.body;
 
-    if(!fromAccount || !toAccount || !amount || !idempotencyKey) {
+    if (!fromAccount || !toAccount || !amount || !idempotencyKey) {
         return res.status(400).json({ message: "All fields are required" });
     }
 
-    const fromUserAccount = await accountModel.findOne({ 
-        _id: fromAccount 
+    const fromUserAccount = await accountModel.findOne({
+        _id: fromAccount
     });
-    const toUserAccount = await accountModel.findOne({ 
-        _id: toAccount 
+    const toUserAccount = await accountModel.findOne({
+        _id: toAccount
     });
 
-    if(!fromUserAccount || !toUserAccount) {
+    if (!fromUserAccount || !toUserAccount) {
         return res.status(404).json({ message: "Account not found" });
     }
 
@@ -89,7 +89,7 @@ async function createTransaction(req: Request, res: Response) {
      */
 
     if (
-        fromUserAccount.status !== "ACTIVE" || 
+        fromUserAccount.status !== "ACTIVE" ||
         toUserAccount.status !== "ACTIVE"
     ) {
         return res.status(400).json({
@@ -104,7 +104,7 @@ async function createTransaction(req: Request, res: Response) {
 
     const balance = await fromUserAccount.getBalance();
 
-    if(balance < amount) {
+    if (balance < amount) {
         return res.status(400).json({
             message: "Insufficient balance"
         })
@@ -141,7 +141,7 @@ async function createTransaction(req: Request, res: Response) {
                 transaction: transaction._id,
                 type: "DEBIT",
             }
-        ], { session }); 
+        ], { session });
 
         /**
          * ➕ Step 8: Create the CREDIT entry on the receiver's account
