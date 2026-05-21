@@ -7,7 +7,7 @@
 
 import { useState, useMemo } from "react";
 import { createTransaction } from "@/lib/api";
-import type { AccountWithBalance } from "./useAccounts";
+import type { AccountWithBalance } from "@/types";
 
 export function useTransfer(accounts: AccountWithBalance[], onResetSuccess?: () => void) {
   const [fromAccount, setFromAccount] = useState("");

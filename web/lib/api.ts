@@ -4,53 +4,13 @@
  */
 
 import { api } from "./axios";
-
-/* ── Type Definitions ── */
-
-/** User object returned by auth endpoints */
-export interface User {
-  _id: string;
-  name: string;
-  email: string;
-}
-
-/** Bank account — balance is derived from ledger, not stored here */
-export interface Account {
-  _id: string;
-  user: string;
-  status: "ACTIVE" | "FROZEN" | "CLOSED";
-  currency: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-/** Transaction between two accounts with idempotency protection */
-export interface Transaction {
-  _id: string;
-  fromAccount: string;
-  toAccount: string;
-  amount: number;
-  status: "PENDING" | "COMPLETED" | "FAILED" | "REVERSED";
-  idempotencyKey: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-/** Auth response shape from login/register endpoints */
-export interface AuthResponse {
-  message: string;
-  status: string;
-  user: User;
-  token: string;
-}
-
-/** Data needed to create a transaction */
-export interface CreateTransactionData {
-  fromAccount: string;
-  toAccount: string;
-  amount: number;
-  idempotencyKey: string;
-}
+import type {
+  User,
+  Account,
+  Transaction,
+  AuthResponse,
+  CreateTransactionData,
+} from "@/types";
 
 /* ── Auth APIs ── */
 
@@ -89,8 +49,8 @@ export async function logoutUser(): Promise<void> {
 
 /** Fetch all accounts belonging to the logged-in user */
 export async function fetchAccounts(): Promise<Account[]> {
-  const response = await api.get<Account[]>("/accounts");
-  return response.data;
+  const response = await api.get<{ accounts: Account[] }>("/accounts");
+  return response.data.accounts;
 }
 
 /** Get balance for an account (calculated from ledger: credits - debits) */
@@ -103,8 +63,8 @@ export async function fetchBalance(accountId: string): Promise<number> {
 
 /** Create a new INR account for the authenticated user */
 export async function createAccount(): Promise<Account> {
-  const response = await api.post<Account>("/accounts");
-  return response.data;
+  const response = await api.post<{ account: Account }>("/accounts");
+  return response.data.account;
 }
 
 /* ── Transaction APIs ── */

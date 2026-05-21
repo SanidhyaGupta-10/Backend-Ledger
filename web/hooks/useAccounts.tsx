@@ -6,11 +6,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { fetchAccounts, fetchBalance, createAccount } from "@/lib/api";
-import type { Account } from "@/lib/api";
-
-export interface AccountWithBalance extends Account {
-  balance: number;
-}
+import type { AccountWithBalance } from "@/types";
 
 export function useAccounts() {
   const [accounts, setAccounts] = useState<AccountWithBalance[]>([]);

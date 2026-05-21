@@ -6,7 +6,8 @@
 
 import { createContext, useState, useEffect, useCallback } from "react";
 import type { ReactNode } from "react";
-import { User, loginUser, registerUser, logoutUser } from "@/lib/api";
+import { loginUser, registerUser, logoutUser } from "@/lib/api";
+import type { User } from "@/types";
 import { useRouter } from "next/navigation";
 
 /** Shape of the auth context value available to all consuming components */

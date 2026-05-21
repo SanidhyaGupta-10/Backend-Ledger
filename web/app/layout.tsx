@@ -26,8 +26,12 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${inter.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col">
+    <html
+      suppressHydrationWarning
+      lang="en" className={`${inter.variable} h-full antialiased`}>
+      <body
+      suppressHydrationWarning
+       className="min-h-full flex flex-col">
         {/* AuthProvider gives all pages access to login state */}
         <AuthProvider>
           <AnimatedBackground />

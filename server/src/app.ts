@@ -3,11 +3,13 @@ import authRoutes from './routes/auth.routes.js'
 import accountRoutes from './routes/account.routes.js'
 import transactionRoutes from './routes/transaction.routes.js'
 import cookieParser from "cookie-parser";
+import cors from 'cors';
 
 
 const app = express();
 
 // Middleware
+app.use(cors())
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
